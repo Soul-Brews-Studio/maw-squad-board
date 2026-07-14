@@ -23,6 +23,12 @@ function parsePort(args: string[]): number | null {
   return Number.isFinite(port) && port >= 1 && port <= 65535 ? port : null;
 }
 
+function parseHost(args: string[]): string {
+  // default loopback; --host lets the owner expose to a trusted interface (e.g. wg mesh IP)
+  const idx = args.indexOf("--host");
+  return idx >= 0 && args[idx + 1] ? args[idx + 1] : "127.0.0.1";
+}
+
 async function run(args: string[], log: (line: string) => void): Promise<number> {
   const port = parsePort(args);
   if (port === null) {
@@ -30,7 +36,7 @@ async function run(args: string[], log: (line: string) => void): Promise<number>
     return 1;
   }
   try {
-    startServer(port, log);
+    startServer(port, log, parseHost(args));
   } catch (e: any) {
     log(`squad-board: ${e?.message ?? e}`);
     return 1;
