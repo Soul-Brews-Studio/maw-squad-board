@@ -54,6 +54,14 @@ export function startServer(port: number, log: (line: string) => void = console.
         return new Response(file(join(ROOT, "web", "index.html")));
       }
 
+      if (url.pathname === "/board.js") {
+        return new Response(file(join(ROOT, "web", "board.js")));
+      }
+
+      if (url.pathname === "/board.css") {
+        return new Response(file(join(ROOT, "web", "board.css")));
+      }
+
       if (url.pathname === "/api/oracles") {
         return Response.json(await listOracles());
       }
