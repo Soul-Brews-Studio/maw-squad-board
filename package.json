@@ -1,0 +1,13 @@
+{
+  "name": "maw-squad-board",
+  "version": "0.1.0",
+  "description": "Board UI to group oracles into squads and broadcast maw hey to the team",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/plugin.ts"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  }
+}

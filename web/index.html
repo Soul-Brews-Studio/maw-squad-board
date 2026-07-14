@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>squad-board</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: ui-monospace, monospace; background:#0b0f0c; color:#c8e6c9; margin:0; display:flex; height:100vh; }
+  aside { width:260px; border-right:1px solid #1e2a20; padding:12px; overflow-y:auto; }
+  main { flex:1; padding:16px; overflow-y:auto; }
+  h1 { font-size:14px; color:#7fdc8a; margin:0 0 12px; }
+  h2 { font-size:12px; color:#5a7a5e; text-transform:uppercase; }
+  label { display:block; padding:3px 6px; border-radius:4px; cursor:pointer; font-size:13px; }
+  label:hover { background:#14201612; background:#142016; }
+  .squad { border:1px solid #2a4a2e; border-radius:8px; padding:12px; margin-bottom:12px; }
+  .squad b { color:#7fdc8a; }
+  button { background:#1c3320; color:#aef0b6; border:1px solid #2a4a2e; border-radius:6px; padding:6px 12px; cursor:pointer; font-family:inherit; }
+  button:hover { background:#254a2b; }
+  input[type=text] { background:#101812; color:#c8e6c9; border:1px solid #2a4a2e; border-radius:6px; padding:6px 8px; font-family:inherit; width:220px; }
+  .result { font-size:12px; color:#8aa88e; white-space:pre-wrap; margin-top:8px; }
+</style>
+</head>
+<body>
+<aside>
+  <h1>🗺️ squad-board</h1>
+  <h2>oracles</h2>
+  <div id="oracles">loading…</div>
+</aside>
+<main>
+  <h2>new squad</h2>
+  <p>
+    <input type="text" id="squadName" placeholder="squad name">
+    <button onclick="createSquad()">create from checked</button>
+  </p>
+  <h2>squads</h2>
+  <div id="squads"></div>
+</main>
+<script>
+async function j(url, opts) { const r = await fetch(url, opts); return r.json(); }
+
+async function refresh() {
+  const oracles = await j('/api/oracles');
+  document.getElementById('oracles').innerHTML = oracles.map(o =>
+    `<label><input type="checkbox" value="${o}"> ${o}</label>`).join('');
+  const squads = await j('/api/squads');
+  document.getElementById('squads').innerHTML = squads.map(s => `
+    <div class="squad">
+      <b>${s.name}</b> — ${s.members.map(m => m.tmuxPaneId).join(', ')}
+      <div><button onclick="broadcast('${s.name}', this)">📢 broadcast to squad</button></div>
+      <div class="result"></div>
+    </div>`).join('') || '<p>no squads yet — check oracles on the left, name it, create.</p>';
+}
+
+async function createSquad() {
+  const name = document.getElementById('squadName').value.trim();
+  const members = [...document.querySelectorAll('#oracles input:checked')].map(i => i.value);
+  if (!name || !members.length) return alert('need a name + at least one oracle checked');
+  await j('/api/squads', { method:'POST', headers:{'content-type':'application/json'},
+    body: JSON.stringify({ name, members }) });
+  refresh();
+}
+
+async function broadcast(name, btn) {
+  btn.disabled = true;
+  const res = await j('/api/broadcast', { method:'POST', headers:{'content-type':'application/json'},
+    body: JSON.stringify({ squad: name }) });
+  btn.disabled = false;
+  btn.closest('.squad').querySelector('.result').textContent =
+    (res.sent || []).map(r => `${r.ok ? '✓' : '✗'} ${r.to}`).join('\n') || JSON.stringify(res);
+}
+
+refresh();
+</script>
+</body>
+</html>

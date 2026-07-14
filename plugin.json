@@ -1,0 +1,26 @@
+{
+  "name": "squad-board",
+  "version": "0.1.0",
+  "sdk": "^1.0.0",
+  "runtime": "bun-dev",
+  "target": "js",
+  "entry": "src/plugin.ts",
+  "description": "Board UI to group oracles into squads and broadcast maw hey to the whole team. Bun-dev tier: sqlite ledger read + maw hey subprocess; no wasm artifact.",
+  "author": "meta Oracle + Nat",
+  "license": "MIT",
+  "weight": 50,
+  "schemaVersion": 1,
+  "capabilities": [
+    "net:listen:localhost",
+    "proc:exec:maw",
+    "fs:read:fleet-state",
+    "fs:write:plugin"
+  ],
+  "cli": {
+    "command": "squad-board",
+    "help": "maw squad-board [--port <port>]  — start the squad board UI (localhost only)",
+    "flags": {
+      "--port": "number"
+    }
+  }
+}
