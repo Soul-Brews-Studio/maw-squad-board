@@ -43,7 +43,7 @@ async function listOracles(): Promise<string[]> {
     .filter(Boolean);
 }
 
-export function startServer(port: number) {
+export function startServer(port: number, log: (line: string) => void = console.log) {
   const server = Bun.serve({
     hostname: "127.0.0.1", // loopback only — broadcast power must not leave the machine
     port,
@@ -101,5 +101,5 @@ export function startServer(port: number) {
     },
   });
 
-  console.log(`squad-board: http://127.0.0.1:${server.port} (loopback only)`);
+  log(`squad-board: http://127.0.0.1:${server.port} (loopback only)`);
 }
