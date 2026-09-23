@@ -2,6 +2,7 @@
 // State is a projection: oracles come fresh from `maw ls`, squads persist to squads.json.
 import { file, write, spawn } from "bun";
 import { join, dirname } from "node:path";
+import { verifyDelivery } from "./ledger";
 import { fileURLToPath } from "node:url";
 
 const ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -54,6 +55,14 @@ export function startServer(port: number, log: (line: string) => void = console.
         return new Response(file(join(ROOT, "web", "index.html")));
       }
 
+      if (url.pathname === "/board.js") {
+        return new Response(file(join(ROOT, "web", "board.js")));
+      }
+
+      if (url.pathname === "/board.css") {
+        return new Response(file(join(ROOT, "web", "board.css")));
+      }
+
       if (url.pathname === "/api/oracles") {
         return Response.json(await listOracles());
       }
@@ -89,12 +98,19 @@ export function startServer(port: number, log: (line: string) => void = console.
           body.message ??
           `squad-board: you are in squad '${squad.name}' — members: ${roster}. We are the same team; reply to each other directly.`;
 
+        const sinceIso = new Date().toISOString();
         const results = [];
         for (const m of squad.members) {
           const { ok, out } = await run(["maw", "hey", m.tmuxPaneId, `${text} --from squad-board`]);
           results.push({ to: m.tmuxPaneId, ok, out: out.trim().slice(0, 200) });
         }
-        return Response.json({ squad: squad.name, sent: results });
+        const sent = await Promise.all(
+          results.map(async (item) => ({
+            ...item,
+            ledger: await verifyDelivery(item.to, sinceIso),
+          })),
+        );
+        return Response.json({ squad: squad.name, sent });
       }
 
       return new Response("not found", { status: 404 });
